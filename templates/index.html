@@ -71,22 +71,42 @@
       margin-bottom: 12px;
     }
 
-    /* ── Upload area ── */
-    .upload-zone {
-      border: 2px dashed var(--gray-200);
-      border-radius: 8px;
-      padding: 28px 20px;
-      text-align: center;
+    /* ── Upload strip ── */
+    .upload-strip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      height: 48px;
       cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
+      transition: background 0.2s;
+      border: none;
+      background: transparent;
+      width: 100%;
     }
-    .upload-zone:hover, .upload-zone.dragover {
-      border-color: var(--primary-light);
+    .upload-strip:hover, .upload-strip.dragover {
       background: #eff6ff;
     }
-    .upload-zone .upload-icon { font-size: 36px; margin-bottom: 10px; display: block; }
-    .upload-zone p { color: var(--gray-600); margin-bottom: 10px; font-size: 13px; }
-    .upload-zone p strong { color: var(--gray-700); }
+    .upload-strip .strip-icon { font-size: 18px; flex-shrink: 0; }
+    .upload-strip .strip-label { font-weight: 600; color: var(--gray-700); white-space: nowrap; flex-shrink: 0; }
+    .upload-strip .strip-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--gray-200);
+      background: #fff;
+      color: var(--gray-700);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .upload-strip .strip-btn:hover { background: var(--gray-100); border-color: var(--gray-400); }
+    .upload-strip .strip-info { color: var(--gray-600); font-size: 12px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .upload-strip .strip-hint { color: var(--gray-400); font-size: 11px; white-space: nowrap; flex-shrink: 0; margin-left: auto; }
 
     /* ── Buttons ── */
     .btn {
@@ -104,6 +124,22 @@
     .btn-primary { background: var(--primary-light); color: #fff; }
     .btn-primary:hover { background: #2563eb; }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-sm {
+      padding: 5px 12px;
+      font-size: 12px;
+    }
+    .btn-outline {
+      background: #fff;
+      color: var(--gray-700);
+      border: 1px solid var(--gray-200);
+    }
+    .btn-outline:hover { background: var(--gray-100); border-color: var(--gray-400); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { background: #047857; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-warning { background: #d97706; color: #fff; }
+    .btn-warning:hover { background: #b45309; }
 
     /* ── Alert ── */
     .alert {
@@ -117,6 +153,49 @@
     }
     .alert-error { background: #fef2f2; color: var(--danger); border: 1px solid #fca5a5; display: flex; }
     .alert-success { background: #f0fdf4; color: #15803d; border: 1px solid #86efac; display: flex; }
+
+    /* ── Year tabs ── */
+    .year-tabs {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 12px 16px 0;
+    }
+    .year-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 2px solid var(--gray-200);
+      background: #fff;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .year-tab:hover { border-color: var(--primary-light); color: var(--primary); }
+    .year-tab.active {
+      background: var(--primary-light);
+      border-color: var(--primary-light);
+      color: #fff;
+    }
+    .year-tab.confirmed {
+      border-color: var(--success);
+    }
+    .year-tab.confirmed:not(.active) {
+      color: var(--success);
+    }
+    .year-tab.active.confirmed {
+      background: var(--primary-light);
+      border-color: var(--success);
+      border-width: 2px;
+      color: #fff;
+    }
+    .year-tab .tab-check { font-size: 11px; }
 
     /* ── Status bar ── */
     .status-bar {
@@ -137,16 +216,17 @@
       letter-spacing: 0.04em;
     }
     .badge-blue { background: #dbeafe; color: #1d4ed8; }
+    .badge-green { background: #dcfce7; color: #15803d; }
     .status-text { color: var(--gray-600); font-size: 13px; }
     .status-meta { margin-left: auto; color: var(--gray-400); font-size: 12px; }
 
-    /* ── Controls ── */
+    /* ── Controls bar ── */
     .controls-bar {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: 16px;
-      padding: 12px 20px;
+      gap: 12px;
+      padding: 10px 16px 12px;
     }
     .control-group { display: flex; align-items: center; gap: 8px; }
     .control-group label { font-weight: 600; color: var(--gray-700); font-size: 12px; white-space: nowrap; }
@@ -160,6 +240,7 @@
       cursor: pointer;
     }
     .control-group select:focus { outline: 2px solid var(--primary-light); border-color: transparent; }
+    .controls-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 
     /* ── Empty state ── */
     #empty-state {
@@ -202,7 +283,7 @@
       left: 0;
       z-index: 30;
       background: var(--thead-bg);
-      min-width: 120px;
+      min-width: 130px;
     }
     table.analysis thead th.th-month {
       background: var(--thead-alt);
@@ -210,13 +291,6 @@
     }
     table.analysis thead th.th-highlight {
       background: #92400e !important;
-    }
-    table.analysis thead tr.thead-group th {
-      background: #1e3a8a;
-      font-size: 11px;
-      padding: 5px 10px;
-      text-align: center;
-      border-bottom: 1px solid rgba(255,255,255,0.15);
     }
 
     table.analysis tbody tr { transition: background 0.1s; }
@@ -257,6 +331,26 @@
     table.analysis td.positive { color: var(--success); font-weight: 700; }
     table.analysis td.negative { color: var(--danger); font-weight: 700; }
     table.analysis td.separator { border-left: 2px solid var(--gray-200); }
+
+    /* ── Info button ── */
+    .info-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-size: 11px;
+      border: none;
+      cursor: pointer;
+      margin-left: 4px;
+      vertical-align: middle;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .info-btn:hover { background: #bfdbfe; }
 
     /* ── Summary cards ── */
     .summary-grid {
@@ -303,6 +397,118 @@
     }
     .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
 
+    /* ── Modals ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 700px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+      gap: 10px;
+    }
+    .modal-title { font-size: 15px; font-weight: 700; flex: 1; }
+    .modal-close {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      border: none;
+      background: var(--gray-100);
+      color: var(--gray-600);
+      cursor: pointer;
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-close:hover { background: var(--gray-200); }
+    .modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 14px 20px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    /* ── Budget table inside modal ── */
+    .budget-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .budget-table th {
+      position: sticky;
+      top: 0;
+      background: var(--gray-50);
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gray-600);
+      border-bottom: 2px solid var(--gray-200);
+      white-space: nowrap;
+    }
+    .budget-table th:nth-child(2) { text-align: right; }
+    .budget-table td {
+      padding: 7px 14px;
+      border-bottom: 1px solid var(--gray-200);
+      vertical-align: middle;
+    }
+    .budget-table tr:last-child td { border-bottom: none; }
+    .budget-table .cat-name { font-weight: 600; white-space: nowrap; }
+    .budget-table input[type="number"] {
+      width: 110px;
+      border: 1px solid var(--gray-200);
+      border-radius: 5px;
+      padding: 4px 8px;
+      font-size: 13px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .budget-table input[type="number"]:focus { outline: 2px solid var(--primary-light); border-color: transparent; }
+    .budget-table textarea {
+      width: 100%;
+      border: 1px solid var(--gray-200);
+      border-radius: 5px;
+      padding: 4px 8px;
+      font-size: 12px;
+      resize: vertical;
+      min-height: 34px;
+      font-family: inherit;
+      color: var(--gray-700);
+    }
+    .budget-table textarea:focus { outline: 2px solid var(--primary-light); border-color: transparent; }
+
+    /* ── Reason modal ── */
+    .reason-modal .modal { max-width: 400px; }
+    .reason-content {
+      padding: 20px;
+      line-height: 1.7;
+      color: var(--gray-700);
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 640px) {
       main { padding: 12px; }
@@ -322,49 +528,34 @@
   <!-- Alert -->
   <div id="alert" class="alert" role="alert"></div>
 
-  <!-- Upload Card -->
+  <!-- Upload strip card -->
   <div class="card">
-    <div class="card-body">
-      <div class="card-title">CSVアップロード</div>
-      <div class="upload-zone" id="upload-zone">
-        <span class="upload-icon">📂</span>
-        <p><strong>ZAIMのCSVファイルをドラッグ&amp;ドロップ</strong></p>
-        <p>または</p>
-        <input type="file" id="file-input" accept=".csv" style="display:none" aria-label="CSVファイル選択">
-        <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
-          ファイルを選択
-        </button>
-        <p style="margin-top:10px; font-size:11px; color:#94a3b8;">
-          Shift-JIS / UTF-8 対応 ／ 最大 20MB
-        </p>
-      </div>
+    <div class="upload-strip" id="upload-strip">
+      <span class="strip-icon">📂</span>
+      <span class="strip-label">CSVファイル:</span>
+      <input type="file" id="file-input" accept=".csv" style="display:none" aria-label="CSVファイル選択">
+      <button class="strip-btn" id="select-btn" type="button">ファイルを選択</button>
+      <span class="strip-info" id="strip-info"></span>
+      <span class="strip-hint">Shift-JIS/UTF-8対応</span>
     </div>
   </div>
 
   <!-- Data section -->
   <div id="data-section" style="display:none">
 
-    <!-- Status -->
+    <!-- Status + Year tabs + Controls all in one card -->
     <div class="card">
       <div class="status-bar">
-        <span class="badge badge-blue">CSV 読込済</span>
+        <span class="badge" id="status-badge">CSV 読込済</span>
         <span class="status-text" id="status-date-range">-</span>
         <span class="status-meta" id="status-meta">-</span>
       </div>
 
-      <!-- Summary cards -->
-      <div class="summary-grid" id="summary-grid"></div>
-    </div>
+      <!-- Year tabs -->
+      <div class="year-tabs" id="year-tabs"></div>
 
-    <!-- Controls -->
-    <div class="card">
+      <!-- Controls -->
       <div class="controls-bar">
-        <div class="control-group">
-          <label for="year-select">年度</label>
-          <select id="year-select">
-            <option value="">全期間</option>
-          </select>
-        </div>
         <div class="control-group">
           <label for="month-select">月ハイライト</label>
           <select id="month-select">
@@ -383,7 +574,14 @@
             <option value="12">12月</option>
           </select>
         </div>
+        <div class="controls-right">
+          <button class="btn btn-sm btn-outline" id="btn-budget" type="button">⚙ 予算設定</button>
+          <button class="btn btn-sm btn-success" id="btn-confirm" type="button" style="display:none"></button>
+        </div>
       </div>
+
+      <!-- Summary cards -->
+      <div class="summary-grid" id="summary-grid"></div>
     </div>
 
     <!-- Main table -->
@@ -393,9 +591,9 @@
         <div class="spinner"></div>
         <p>集計中…</p>
       </div>
-      <div id="empty-state" style="display:none">
-        <span class="empty-icon">🔍</span>
-        <p>選択した条件のデータがありません</p>
+      <div id="empty-state" style="display:none; text-align:center; padding:56px 24px; color:#94a3b8;">
+        <span style="font-size:52px; display:block; margin-bottom:16px;">🔍</span>
+        <p style="font-size:14px; line-height:1.8;">選択した条件のデータがありません</p>
       </div>
       <div class="table-scroll" id="table-wrap" style="display:none">
         <table class="analysis" id="main-table">
@@ -409,7 +607,7 @@
 
   <!-- Initial empty state -->
   <div class="card" id="initial-empty">
-    <div id="empty-state-initial" style="text-align:center; padding:56px 24px; color:#94a3b8;">
+    <div style="text-align:center; padding:56px 24px; color:#94a3b8;">
       <span style="font-size:52px; display:block; margin-bottom:16px;">📊</span>
       <p style="font-size:14px; line-height:1.8;">
         ZAIMからエクスポートしたCSVファイルをアップロードすると<br>
@@ -419,6 +617,48 @@
   </div>
 
 </main>
+
+<!-- Budget modal -->
+<div class="modal-overlay" id="budget-modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="budget-modal-title">予算設定</span>
+      <button class="modal-close" id="budget-modal-close" type="button">✕</button>
+    </div>
+    <div class="modal-body">
+      <table class="budget-table" id="budget-table">
+        <thead>
+          <tr>
+            <th>費目</th>
+            <th style="text-align:right">予算/月 (円)</th>
+            <th>理由・メモ</th>
+          </tr>
+        </thead>
+        <tbody id="budget-tbody"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" id="budget-cancel" type="button">キャンセル</button>
+      <button class="btn btn-primary btn-sm" id="budget-save" type="button">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reason modal -->
+<div class="modal-overlay reason-modal" id="reason-modal-overlay">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <span class="modal-title" id="reason-modal-title"></span>
+      <button class="modal-close" id="reason-modal-close" type="button">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="reason-content" id="reason-content"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" id="reason-ok" type="button">閉じる</button>
+    </div>
+  </div>
+</div>
 
 <script>
   'use strict';
@@ -434,18 +674,30 @@
 
   // ── State ────────────────────────────────────────────────────────────────
   let _data = null;
+  let _currentYear = null;
+  let _statusCache = null; // {has_csv, csv_years, confirmed}
 
-  // ── Upload ───────────────────────────────────────────────────────────────
-  const zone = document.getElementById('upload-zone');
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-  zone.addEventListener('drop', e => {
+  // ── Upload strip ─────────────────────────────────────────────────────────
+  const strip = document.getElementById('upload-strip');
+  const fileInput = document.getElementById('file-input');
+  const selectBtn = document.getElementById('select-btn');
+
+  strip.addEventListener('dragover', e => { e.preventDefault(); strip.classList.add('dragover'); });
+  strip.addEventListener('dragleave', () => strip.classList.remove('dragover'));
+  strip.addEventListener('drop', e => {
     e.preventDefault();
-    zone.classList.remove('dragover');
+    strip.classList.remove('dragover');
     const f = e.dataTransfer.files[0];
     if (f) handleFile(f);
   });
-  document.getElementById('file-input').addEventListener('change', e => {
+  strip.addEventListener('click', e => {
+    if (e.target !== selectBtn) fileInput.click();
+  });
+  selectBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    fileInput.click();
+  });
+  fileInput.addEventListener('change', e => {
     if (e.target.files[0]) handleFile(e.target.files[0]);
     e.target.value = '';
   });
@@ -458,61 +710,261 @@
       const res = await fetch('/upload', { method: 'POST', body: fd });
       const d = await res.json();
       if (d.error) { showAlert(d.error, 'error'); return; }
+      const info = `${file.name}（${d.rows.toLocaleString()}件）`;
+      document.getElementById('strip-info').textContent = info;
       showAlert(`${file.name} を読み込みました（${d.rows.toLocaleString()} 件）`, 'success');
-      await loadData();
+      await refreshStatus();
     } catch (err) {
       showAlert('アップロードエラー: ' + err.message, 'error');
     }
   }
 
+  // ── Status / year tabs ───────────────────────────────────────────────────
+  async function refreshStatus() {
+    const res = await fetch('/api/status');
+    _statusCache = await res.json();
+    rebuildYearTabs();
+  }
+
+  function rebuildYearTabs() {
+    const s = _statusCache;
+    const confirmedYears = new Set((s.confirmed || []).map(c => c.year));
+    const csvYears = s.csv_years || [];
+
+    // Union of all years, descending
+    const allYears = Array.from(new Set([...csvYears, ...confirmedYears])).sort((a, b) => b - a);
+
+    const tabsEl = document.getElementById('year-tabs');
+    tabsEl.innerHTML = '';
+
+    if (allYears.length === 0) {
+      document.getElementById('data-section').style.display = 'none';
+      document.getElementById('initial-empty').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('initial-empty').style.display = 'none';
+    document.getElementById('data-section').style.display = 'block';
+
+    // Pick year to select: if currentYear is valid keep it, else latest non-confirmed
+    let yearToSelect = _currentYear;
+    if (!yearToSelect || !allYears.includes(yearToSelect)) {
+      // prefer latest non-confirmed CSV year
+      yearToSelect = csvYears.find(y => !confirmedYears.has(y)) || allYears[0];
+    }
+
+    allYears.forEach(y => {
+      const isConfirmed = confirmedYears.has(y);
+      const tab = document.createElement('button');
+      tab.type = 'button';
+      tab.className = 'year-tab' + (isConfirmed ? ' confirmed' : '') + (y === yearToSelect ? ' active' : '');
+      tab.dataset.year = y;
+      tab.innerHTML = (isConfirmed ? '<span class="tab-check">✓</span>' : '') + `${y}年`;
+      tab.addEventListener('click', () => selectYear(y));
+      tabsEl.appendChild(tab);
+    });
+
+    if (yearToSelect && yearToSelect !== _currentYear) {
+      _currentYear = yearToSelect;
+      loadData(yearToSelect);
+    } else if (yearToSelect) {
+      updateConfirmButton();
+    }
+  }
+
+  function selectYear(year) {
+    if (year === _currentYear) return;
+    _currentYear = year;
+
+    // Update tab active state
+    document.querySelectorAll('.year-tab').forEach(tab => {
+      tab.classList.toggle('active', parseInt(tab.dataset.year) === year);
+    });
+
+    loadData(year);
+  }
+
   // ── Controls ─────────────────────────────────────────────────────────────
-  document.getElementById('year-select').addEventListener('change', loadData);
   document.getElementById('month-select').addEventListener('change', () => {
     if (_data) renderTable(_data);
   });
 
+  // ── Confirm button ───────────────────────────────────────────────────────
+  function updateConfirmButton() {
+    const btn = document.getElementById('btn-confirm');
+    if (!_currentYear || !_statusCache) { btn.style.display = 'none'; return; }
+    const confirmedYears = new Set((_statusCache.confirmed || []).map(c => c.year));
+    const isConfirmed = confirmedYears.has(_currentYear);
+    const inCsv = (_statusCache.csv_years || []).includes(_currentYear);
+
+    if (isConfirmed) {
+      btn.style.display = '';
+      btn.textContent = `${_currentYear}年の確定を解除`;
+      btn.className = 'btn btn-sm btn-danger';
+    } else if (inCsv) {
+      btn.style.display = '';
+      btn.textContent = `${_currentYear}年を確定する`;
+      btn.className = 'btn btn-sm btn-warning';
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+
+  document.getElementById('btn-confirm').addEventListener('click', async () => {
+    if (!_currentYear) return;
+    const confirmedYears = new Set((_statusCache.confirmed || []).map(c => c.year));
+    const isConfirmed = confirmedYears.has(_currentYear);
+
+    if (isConfirmed) {
+      if (!confirm(`${_currentYear}年の確定を解除しますか？\nこの操作でデータがDBから削除されます。`)) return;
+      try {
+        const res = await fetch(`/api/confirm/${_currentYear}`, { method: 'DELETE' });
+        const d = await res.json();
+        if (d.error) { showAlert(d.error, 'error'); return; }
+        showAlert(`${_currentYear}年の確定を解除しました`, 'success');
+        await refreshStatus();
+        loadData(_currentYear);
+      } catch (err) {
+        showAlert('エラー: ' + err.message, 'error');
+      }
+    } else {
+      if (!confirm(`${_currentYear}年を確定しますか？\n確定すると、新しいCSVをアップロードしても${_currentYear}年のデータが保持されます。`)) return;
+      try {
+        const res = await fetch(`/api/confirm/${_currentYear}`, { method: 'POST' });
+        const d = await res.json();
+        if (d.error) { showAlert(d.error, 'error'); return; }
+        showAlert(`${_currentYear}年を確定しました`, 'success');
+        await refreshStatus();
+        loadData(_currentYear);
+      } catch (err) {
+        showAlert('エラー: ' + err.message, 'error');
+      }
+    }
+  });
+
+  // ── Budget modal ─────────────────────────────────────────────────────────
+  document.getElementById('btn-budget').addEventListener('click', openBudgetModal);
+  document.getElementById('budget-modal-close').addEventListener('click', closeBudgetModal);
+  document.getElementById('budget-cancel').addEventListener('click', closeBudgetModal);
+  document.getElementById('budget-modal-overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeBudgetModal();
+  });
+
+  async function openBudgetModal() {
+    if (!_currentYear) return;
+    document.getElementById('budget-modal-title').textContent = `予算設定 — ${_currentYear}年`;
+
+    try {
+      const res = await fetch(`/api/budget/${_currentYear}`);
+      const d = await res.json();
+      const tbody = document.getElementById('budget-tbody');
+      tbody.innerHTML = '';
+      (d.cat_order || []).forEach(cat => {
+        const bv = (d.budget || {})[cat] || { amount: 0, reason: '' };
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="cat-name">${escHtml(cat)}</td>
+          <td style="text-align:right">
+            <input type="number" min="0" step="1000" value="${bv.amount}" data-cat="${escHtml(cat)}" data-field="amount">
+          </td>
+          <td>
+            <textarea rows="1" data-cat="${escHtml(cat)}" data-field="reason">${escHtml(bv.reason)}</textarea>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      document.getElementById('budget-modal-overlay').classList.add('open');
+    } catch (err) {
+      showAlert('予算の取得に失敗しました: ' + err.message, 'error');
+    }
+  }
+
+  function closeBudgetModal() {
+    document.getElementById('budget-modal-overlay').classList.remove('open');
+  }
+
+  document.getElementById('budget-save').addEventListener('click', async () => {
+    if (!_currentYear) return;
+    const tbody = document.getElementById('budget-tbody');
+    const budget = {};
+    tbody.querySelectorAll('input[data-field="amount"]').forEach(inp => {
+      const cat = inp.dataset.cat;
+      if (!budget[cat]) budget[cat] = { amount: 0, reason: '' };
+      budget[cat].amount = parseInt(inp.value, 10) || 0;
+    });
+    tbody.querySelectorAll('textarea[data-field="reason"]').forEach(ta => {
+      const cat = ta.dataset.cat;
+      if (!budget[cat]) budget[cat] = { amount: 0, reason: '' };
+      budget[cat].reason = ta.value;
+    });
+
+    try {
+      const res = await fetch(`/api/budget/${_currentYear}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ budget }),
+      });
+      const d = await res.json();
+      if (d.error) { showAlert(d.error, 'error'); return; }
+      closeBudgetModal();
+      showAlert('予算を保存しました', 'success');
+      loadData(_currentYear);
+    } catch (err) {
+      showAlert('保存エラー: ' + err.message, 'error');
+    }
+  });
+
+  // ── Reason modal ─────────────────────────────────────────────────────────
+  document.getElementById('reason-modal-close').addEventListener('click', closeReasonModal);
+  document.getElementById('reason-ok').addEventListener('click', closeReasonModal);
+  document.getElementById('reason-modal-overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeReasonModal();
+  });
+
+  function showReasonModal(catName, reason) {
+    document.getElementById('reason-modal-title').textContent = catName;
+    document.getElementById('reason-content').textContent = reason;
+    document.getElementById('reason-modal-overlay').classList.add('open');
+  }
+  function closeReasonModal() {
+    document.getElementById('reason-modal-overlay').classList.remove('open');
+  }
+
   // ── Load data ────────────────────────────────────────────────────────────
-  async function loadData() {
-    const year = document.getElementById('year-select').value;
-    const url = year ? `/api/data?year=${year}` : '/api/data';
+  async function loadData(year) {
+    if (!year) year = _currentYear;
+    if (!year) return;
 
     document.getElementById('loading').style.display = 'block';
     document.getElementById('table-wrap').style.display = 'none';
     document.getElementById('empty-state').style.display = 'none';
 
     try {
-      const res = await fetch(url);
+      const res = await fetch(`/api/data/${year}`);
       const d = await res.json();
       document.getElementById('loading').style.display = 'none';
 
       if (d.status === 'no_data') {
-        document.getElementById('data-section').style.display = 'none';
-        document.getElementById('initial-empty').style.display = 'block';
+        document.getElementById('empty-state').style.display = 'block';
         return;
       }
-
-      document.getElementById('initial-empty').style.display = 'none';
-      document.getElementById('data-section').style.display = 'block';
-
-      // Update year selector
-      const ys = document.getElementById('year-select');
-      const prev = ys.value;
-      ys.innerHTML = '<option value="">全期間</option>';
-      (d.years || []).forEach(y => {
-        const o = document.createElement('option');
-        o.value = y; o.textContent = `${y}年`;
-        if (String(y) === prev) o.selected = true;
-        ys.appendChild(o);
-      });
 
       // Auto-highlight current month on first load
       const ms = document.getElementById('month-select');
       if (!ms.value) ms.value = String(new Date().getMonth() + 1);
 
       // Status
+      const isConfirmed = d.is_confirmed;
+      const badge = document.getElementById('status-badge');
+      badge.textContent = isConfirmed ? '✓ 確定済' : 'CSV 読込済';
+      badge.className = 'badge ' + (isConfirmed ? 'badge-green' : 'badge-blue');
+
       document.getElementById('status-date-range').textContent = d.date_range;
       document.getElementById('status-meta').textContent = `経過月数: ${d.max_month} ヶ月`;
-      document.getElementById('header-meta').textContent = d.date_range;
+      document.getElementById('header-meta').textContent = `${year}年 ${d.date_range}`;
+
+      // Update confirm button
+      updateConfirmButton();
 
       // Summary
       renderSummary(d);
@@ -561,18 +1013,17 @@
     document.getElementById('empty-state').style.display = 'none';
     document.getElementById('table-wrap').style.display = 'block';
 
-    const hl = document.getElementById('month-select').value; // highlighted month string
+    const hl = document.getElementById('month-select').value;
 
     // ── thead ──
     const thead = document.getElementById('main-thead');
     const summaryHeaders = ['費目', '予算/月', '予算/年', '実績/月*', '実績/年', '予実差'];
-    const monthHeaders = MONTHS;
 
     const thSummary = summaryHeaders.map((h, i) => {
       const sep = i === summaryHeaders.length - 1 ? ' class="separator"' : '';
       return `<th${sep}>${h}</th>`;
     }).join('');
-    const thMonths = monthHeaders.map((h, i) => {
+    const thMonths = MONTHS.map((h, i) => {
       const m = i + 1;
       const cls = `th-month${String(m) === hl ? ' th-highlight' : ''}`;
       return `<th class="${cls}">${h}</th>`;
@@ -588,6 +1039,13 @@
       * 実績/月 = 実績/年 ÷ 経過月数（${d.max_month}ヶ月）
     </td></tr>`;
     tbody.innerHTML = rows + totalRow + noteRow;
+
+    // Attach info button listeners
+    tbody.querySelectorAll('.info-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        showReasonModal(btn.dataset.cat, btn.dataset.reason);
+      });
+    });
   }
 
   function buildRow(cat, hl) {
@@ -601,8 +1059,12 @@
       return `<td class="cell-month${hlCls}${zeroCls}${sep}">${fmt(v)}</td>`;
     }).join('');
 
+    const infoBtn = (cat.reason && cat.reason.trim())
+      ? `<button class="info-btn" data-cat="${escHtml(cat.name)}" data-reason="${escHtml(cat.reason)}" title="メモを表示" type="button">ℹ</button>`
+      : '';
+
     return `<tr>
-      <td>${escHtml(cat.name)}</td>
+      <td>${escHtml(cat.name)}${infoBtn}</td>
       <td>${fmt(cat.budget_month)}</td>
       <td>${fmt(cat.budget_year)}</td>
       <td>${fmt(cat.actual_month)}</td>
@@ -647,14 +1109,16 @@
 
   // ── Util ──────────────────────────────────────────────────────────────────
   function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
   // ── Init ──────────────────────────────────────────────────────────────────
   (async () => {
-    const res = await fetch('/api/status');
-    const s = await res.json();
-    if (s.has_data) await loadData();
+    // Auto-highlight current month
+    const ms = document.getElementById('month-select');
+    ms.value = String(new Date().getMonth() + 1);
+
+    await refreshStatus();
   })();
 </script>
 </body>

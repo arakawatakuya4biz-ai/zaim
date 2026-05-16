@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZAIM 家計分析</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #1e40af;
+      --primary-light: #3b82f6;
+      --success: #059669;
+      --danger: #dc2626;
+      --warning-bg: #fef3c7;
+      --warning-border: #f59e0b;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-400: #94a3b8;
+      --gray-600: #475569;
+      --gray-700: #334155;
+      --gray-900: #0f172a;
+      --thead-bg: #1e3a8a;
+      --thead-alt: #1e40af;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-900);
+      font-size: 13px;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header .logo { font-size: 22px; }
+    header h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.02em; }
+    header .meta { margin-left: auto; font-size: 12px; opacity: 0.75; text-align: right; line-height: 1.5; }
+
+    /* ── Main layout ── */
+    main { max-width: 1600px; margin: 0 auto; padding: 20px 20px 40px; }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .card-body { padding: 20px; }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+
+    /* ── Upload area ── */
+    .upload-zone {
+      border: 2px dashed var(--gray-200);
+      border-radius: 8px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--primary-light);
+      background: #eff6ff;
+    }
+    .upload-zone .upload-icon { font-size: 36px; margin-bottom: 10px; display: block; }
+    .upload-zone p { color: var(--gray-600); margin-bottom: 10px; font-size: 13px; }
+    .upload-zone p strong { color: var(--gray-700); }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn-primary { background: var(--primary-light); color: #fff; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Alert ── */
+    .alert {
+      padding: 10px 16px;
+      border-radius: 7px;
+      font-size: 13px;
+      margin-bottom: 14px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+    .alert-error { background: #fef2f2; color: var(--danger); border: 1px solid #fca5a5; display: flex; }
+    .alert-success { background: #f0fdf4; color: #15803d; border: 1px solid #86efac; display: flex; }
+
+    /* ── Status bar ── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 12px 20px;
+      background: #eff6ff;
+      border-bottom: 1px solid #bfdbfe;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .badge-blue { background: #dbeafe; color: #1d4ed8; }
+    .status-text { color: var(--gray-600); font-size: 13px; }
+    .status-meta { margin-left: auto; color: var(--gray-400); font-size: 12px; }
+
+    /* ── Controls ── */
+    .controls-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 12px 20px;
+    }
+    .control-group { display: flex; align-items: center; gap: 8px; }
+    .control-group label { font-weight: 600; color: var(--gray-700); font-size: 12px; white-space: nowrap; }
+    .control-group select {
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 13px;
+      color: var(--gray-700);
+      background: #fff;
+      cursor: pointer;
+    }
+    .control-group select:focus { outline: 2px solid var(--primary-light); border-color: transparent; }
+
+    /* ── Empty state ── */
+    #empty-state {
+      text-align: center;
+      padding: 56px 24px;
+      color: var(--gray-400);
+    }
+    #empty-state .empty-icon { font-size: 52px; margin-bottom: 16px; display: block; }
+    #empty-state p { font-size: 14px; line-height: 1.8; }
+
+    /* ── Table wrapper ── */
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── Main analysis table ── */
+    table.analysis {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 1100px;
+      font-size: 13px;
+    }
+
+    table.analysis thead th {
+      background: var(--thead-bg);
+      color: #fff;
+      padding: 9px 10px;
+      text-align: right;
+      font-weight: 700;
+      font-size: 12px;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      border-right: 1px solid rgba(255,255,255,0.1);
+    }
+    table.analysis thead th:first-child {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      z-index: 30;
+      background: var(--thead-bg);
+      min-width: 120px;
+    }
+    table.analysis thead th.th-month {
+      background: var(--thead-alt);
+      min-width: 72px;
+    }
+    table.analysis thead th.th-highlight {
+      background: #92400e !important;
+    }
+    table.analysis thead tr.thead-group th {
+      background: #1e3a8a;
+      font-size: 11px;
+      padding: 5px 10px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+
+    table.analysis tbody tr { transition: background 0.1s; }
+    table.analysis tbody tr:nth-child(even) { background: var(--gray-50); }
+    table.analysis tbody tr:hover { background: #eff6ff; }
+    table.analysis tbody tr.total-row {
+      background: #f0f9ff !important;
+      border-top: 2px solid var(--primary-light);
+    }
+    table.analysis tbody tr.total-row td { font-weight: 700; }
+
+    table.analysis td {
+      padding: 7px 10px;
+      text-align: right;
+      border-bottom: 1px solid var(--gray-200);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    table.analysis td:first-child {
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      left: 0;
+      background: inherit;
+      border-right: 2px solid var(--gray-200);
+      z-index: 5;
+    }
+    table.analysis tbody tr:nth-child(even) td:first-child { background: var(--gray-50); }
+    table.analysis tbody tr:hover td:first-child { background: #eff6ff; }
+    table.analysis tbody tr.total-row td:first-child { background: #f0f9ff; }
+
+    table.analysis td.cell-month {
+      min-width: 72px;
+      color: var(--gray-700);
+    }
+    table.analysis td.cell-highlight { background: var(--warning-bg) !important; font-weight: 700; }
+    table.analysis td.cell-zero { color: var(--gray-400); }
+    table.analysis td.positive { color: var(--success); font-weight: 700; }
+    table.analysis td.negative { color: var(--danger); font-weight: 700; }
+    table.analysis td.separator { border-left: 2px solid var(--gray-200); }
+
+    /* ── Summary cards ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      padding: 16px 20px;
+    }
+    .summary-item {
+      background: var(--gray-50);
+      border-radius: 8px;
+      padding: 12px 14px;
+      border: 1px solid var(--gray-200);
+    }
+    .summary-item .label { font-size: 11px; color: var(--gray-400); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .summary-item .value { font-size: 18px; font-weight: 800; color: var(--gray-900); font-variant-numeric: tabular-nums; }
+    .summary-item .value.positive { color: var(--success); }
+    .summary-item .value.negative { color: var(--danger); }
+
+    /* ── Loading ── */
+    .loading { text-align: center; padding: 40px; color: var(--gray-400); }
+    .spinner {
+      display: inline-block;
+      width: 24px; height: 24px;
+      border: 3px solid var(--gray-200);
+      border-top-color: var(--primary-light);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-bottom: 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Section divider ── */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 20px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      main { padding: 12px; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">📊</span>
+  <h1>ZAIM 家計分析</h1>
+  <div class="meta" id="header-meta">CSVをアップロードしてください</div>
+</header>
+
+<main>
+  <!-- Alert -->
+  <div id="alert" class="alert" role="alert"></div>
+
+  <!-- Upload Card -->
+  <div class="card">
+    <div class="card-body">
+      <div class="card-title">CSVアップロード</div>
+      <div class="upload-zone" id="upload-zone">
+        <span class="upload-icon">📂</span>
+        <p><strong>ZAIMのCSVファイルをドラッグ&amp;ドロップ</strong></p>
+        <p>または</p>
+        <input type="file" id="file-input" accept=".csv" style="display:none" aria-label="CSVファイル選択">
+        <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+          ファイルを選択
+        </button>
+        <p style="margin-top:10px; font-size:11px; color:#94a3b8;">
+          Shift-JIS / UTF-8 対応 ／ 最大 20MB
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data section -->
+  <div id="data-section" style="display:none">
+
+    <!-- Status -->
+    <div class="card">
+      <div class="status-bar">
+        <span class="badge badge-blue">CSV 読込済</span>
+        <span class="status-text" id="status-date-range">-</span>
+        <span class="status-meta" id="status-meta">-</span>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="summary-grid" id="summary-grid"></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="card">
+      <div class="controls-bar">
+        <div class="control-group">
+          <label for="year-select">年度</label>
+          <select id="year-select">
+            <option value="">全期間</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="month-select">月ハイライト</label>
+          <select id="month-select">
+            <option value="">なし</option>
+            <option value="1">1月</option>
+            <option value="2">2月</option>
+            <option value="3">3月</option>
+            <option value="4">4月</option>
+            <option value="5">5月</option>
+            <option value="6">6月</option>
+            <option value="7">7月</option>
+            <option value="8">8月</option>
+            <option value="9">9月</option>
+            <option value="10">10月</option>
+            <option value="11">11月</option>
+            <option value="12">12月</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main table -->
+    <div class="card">
+      <div class="section-divider">支出集計</div>
+      <div id="loading" class="loading" style="display:none">
+        <div class="spinner"></div>
+        <p>集計中…</p>
+      </div>
+      <div id="empty-state" style="display:none">
+        <span class="empty-icon">🔍</span>
+        <p>選択した条件のデータがありません</p>
+      </div>
+      <div class="table-scroll" id="table-wrap" style="display:none">
+        <table class="analysis" id="main-table">
+          <thead id="main-thead"></thead>
+          <tbody id="main-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /data-section -->
+
+  <!-- Initial empty state -->
+  <div class="card" id="initial-empty">
+    <div id="empty-state-initial" style="text-align:center; padding:56px 24px; color:#94a3b8;">
+      <span style="font-size:52px; display:block; margin-bottom:16px;">📊</span>
+      <p style="font-size:14px; line-height:1.8;">
+        ZAIMからエクスポートしたCSVファイルをアップロードすると<br>
+        費目別・月別の家計集計が表示されます
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  'use strict';
+
+  // ── Formatters ──────────────────────────────────────────────────────────
+  const fmt = n => (n === 0) ? '–' : n.toLocaleString('ja-JP');
+  const fmtAbs = n => n.toLocaleString('ja-JP');
+  const fmtDiff = n => {
+    if (n === 0) return '±0';
+    return (n > 0 ? '+' : '') + n.toLocaleString('ja-JP');
+  };
+  const diffCls = n => n > 0 ? 'positive' : n < 0 ? 'negative' : '';
+
+  // ── State ────────────────────────────────────────────────────────────────
+  let _data = null;
+
+  // ── Upload ───────────────────────────────────────────────────────────────
+  const zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+  document.getElementById('file-input').addEventListener('change', e => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  async function handleFile(file) {
+    showAlert('', '');
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res = await fetch('/upload', { method: 'POST', body: fd });
+      const d = await res.json();
+      if (d.error) { showAlert(d.error, 'error'); return; }
+      showAlert(`${file.name} を読み込みました（${d.rows.toLocaleString()} 件）`, 'success');
+      await loadData();
+    } catch (err) {
+      showAlert('アップロードエラー: ' + err.message, 'error');
+    }
+  }
+
+  // ── Controls ─────────────────────────────────────────────────────────────
+  document.getElementById('year-select').addEventListener('change', loadData);
+  document.getElementById('month-select').addEventListener('change', () => {
+    if (_data) renderTable(_data);
+  });
+
+  // ── Load data ────────────────────────────────────────────────────────────
+  async function loadData() {
+    const year = document.getElementById('year-select').value;
+    const url = year ? `/api/data?year=${year}` : '/api/data';
+
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('table-wrap').style.display = 'none';
+    document.getElementById('empty-state').style.display = 'none';
+
+    try {
+      const res = await fetch(url);
+      const d = await res.json();
+      document.getElementById('loading').style.display = 'none';
+
+      if (d.status === 'no_data') {
+        document.getElementById('data-section').style.display = 'none';
+        document.getElementById('initial-empty').style.display = 'block';
+        return;
+      }
+
+      document.getElementById('initial-empty').style.display = 'none';
+      document.getElementById('data-section').style.display = 'block';
+
+      // Update year selector
+      const ys = document.getElementById('year-select');
+      const prev = ys.value;
+      ys.innerHTML = '<option value="">全期間</option>';
+      (d.years || []).forEach(y => {
+        const o = document.createElement('option');
+        o.value = y; o.textContent = `${y}年`;
+        if (String(y) === prev) o.selected = true;
+        ys.appendChild(o);
+      });
+
+      // Auto-highlight current month on first load
+      const ms = document.getElementById('month-select');
+      if (!ms.value) ms.value = String(new Date().getMonth() + 1);
+
+      // Status
+      document.getElementById('status-date-range').textContent = d.date_range;
+      document.getElementById('status-meta').textContent = `経過月数: ${d.max_month} ヶ月`;
+      document.getElementById('header-meta').textContent = d.date_range;
+
+      // Summary
+      renderSummary(d);
+
+      _data = d;
+      renderTable(d);
+
+    } catch (err) {
+      document.getElementById('loading').style.display = 'none';
+      showAlert('データ取得エラー: ' + err.message, 'error');
+    }
+  }
+
+  // ── Summary cards ────────────────────────────────────────────────────────
+  function renderSummary(d) {
+    const t = d.total;
+    const surplus = t.diff;
+    const incDiff = d.income_total - t.actual_year;
+
+    const items = [
+      { label: '予算/年（支出）', value: fmtAbs(t.budget_year) + ' 円', cls: '' },
+      { label: '実績/年（支出）', value: fmtAbs(t.actual_year) + ' 円', cls: '' },
+      { label: '予実差（支出）', value: fmtDiff(surplus) + ' 円', cls: diffCls(surplus) },
+      { label: '収入合計', value: fmtAbs(d.income_total) + ' 円', cls: '' },
+      { label: '収支差額', value: fmtDiff(incDiff) + ' 円', cls: diffCls(incDiff) },
+    ];
+
+    document.getElementById('summary-grid').innerHTML = items.map(it => `
+      <div class="summary-item">
+        <div class="label">${it.label}</div>
+        <div class="value ${it.cls}">${it.value}</div>
+      </div>
+    `).join('');
+  }
+
+  // ── Main table ───────────────────────────────────────────────────────────
+  const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+  function renderTable(d) {
+    if (!d.categories || d.categories.length === 0) {
+      document.getElementById('table-wrap').style.display = 'none';
+      document.getElementById('empty-state').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('table-wrap').style.display = 'block';
+
+    const hl = document.getElementById('month-select').value; // highlighted month string
+
+    // ── thead ──
+    const thead = document.getElementById('main-thead');
+    const summaryHeaders = ['費目', '予算/月', '予算/年', '実績/月*', '実績/年', '予実差'];
+    const monthHeaders = MONTHS;
+
+    const thSummary = summaryHeaders.map((h, i) => {
+      const sep = i === summaryHeaders.length - 1 ? ' class="separator"' : '';
+      return `<th${sep}>${h}</th>`;
+    }).join('');
+    const thMonths = monthHeaders.map((h, i) => {
+      const m = i + 1;
+      const cls = `th-month${String(m) === hl ? ' th-highlight' : ''}`;
+      return `<th class="${cls}">${h}</th>`;
+    }).join('');
+
+    thead.innerHTML = `<tr>${thSummary}${thMonths}</tr>`;
+
+    // ── tbody ──
+    const tbody = document.getElementById('main-tbody');
+    const rows = d.categories.map(cat => buildRow(cat, hl)).join('');
+    const totalRow = buildTotalRow(d.total, hl);
+    const noteRow = `<tr><td colspan="${summaryHeaders.length + 12}" style="padding:6px 10px; font-size:11px; color:#94a3b8; text-align:left;">
+      * 実績/月 = 実績/年 ÷ 経過月数（${d.max_month}ヶ月）
+    </td></tr>`;
+    tbody.innerHTML = rows + totalRow + noteRow;
+  }
+
+  function buildRow(cat, hl) {
+    const diff = cat.diff;
+    const monthCells = Array.from({ length: 12 }, (_, i) => {
+      const m = i + 1;
+      const v = cat.monthly[String(m)] || 0;
+      const hlCls = String(m) === hl ? ' cell-highlight' : '';
+      const zeroCls = v === 0 ? ' cell-zero' : '';
+      const sep = m === 1 ? ' separator' : '';
+      return `<td class="cell-month${hlCls}${zeroCls}${sep}">${fmt(v)}</td>`;
+    }).join('');
+
+    return `<tr>
+      <td>${escHtml(cat.name)}</td>
+      <td>${fmt(cat.budget_month)}</td>
+      <td>${fmt(cat.budget_year)}</td>
+      <td>${fmt(cat.actual_month)}</td>
+      <td>${fmt(cat.actual_year)}</td>
+      <td class="${diffCls(diff)} separator">${fmtDiff(diff)}</td>
+      ${monthCells}
+    </tr>`;
+  }
+
+  function buildTotalRow(t, hl) {
+    const monthCells = Array.from({ length: 12 }, (_, i) => {
+      const m = i + 1;
+      const v = t.monthly[String(m)] || 0;
+      const hlCls = String(m) === hl ? ' cell-highlight' : '';
+      const zeroCls = v === 0 ? ' cell-zero' : '';
+      const sep = m === 1 ? ' separator' : '';
+      return `<td class="cell-month${hlCls}${zeroCls}${sep}">${fmt(v)}</td>`;
+    }).join('');
+
+    return `<tr class="total-row">
+      <td>合計</td>
+      <td>${fmtAbs(t.budget_month)}</td>
+      <td>${fmtAbs(t.budget_year)}</td>
+      <td>${fmtAbs(t.actual_month)}</td>
+      <td>${fmtAbs(t.actual_year)}</td>
+      <td class="${diffCls(t.diff)} separator">${fmtDiff(t.diff)}</td>
+      ${monthCells}
+    </tr>`;
+  }
+
+  // ── Alert ─────────────────────────────────────────────────────────────────
+  let _alertTimer = null;
+  function showAlert(msg, type) {
+    const el = document.getElementById('alert');
+    if (!msg) { el.style.display = 'none'; return; }
+    el.className = `alert alert-${type}`;
+    el.textContent = msg;
+    el.style.display = 'flex';
+    clearTimeout(_alertTimer);
+    if (type === 'success') _alertTimer = setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+
+  // ── Util ──────────────────────────────────────────────────────────────────
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  (async () => {
+    const res = await fetch('/api/status');
+    const s = await res.json();
+    if (s.has_data) await loadData();
+  })();
+</script>
+</body>
+</html>

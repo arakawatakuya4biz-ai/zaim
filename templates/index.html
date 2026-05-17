@@ -824,8 +824,9 @@
     const confirmedYears = new Set((s.confirmed || []).map(c => c.year));
     const csvYears = s.csv_years || [];
 
-    // Union of all years, descending
-    const allYears = Array.from(new Set([...csvYears, ...confirmedYears])).sort((a, b) => b - a);
+    // Union of all years: CSV + confirmed + years with saved budgets
+    const budgetYears = s.budget_years || [];
+    const allYears = Array.from(new Set([...csvYears, ...confirmedYears, ...budgetYears])).sort((a, b) => b - a);
 
     const tabsEl = document.getElementById('year-tabs');
     tabsEl.innerHTML = '';
@@ -839,10 +840,9 @@
     document.getElementById('initial-empty').style.display = 'none';
     document.getElementById('data-section').style.display = 'block';
 
-    // Pick year to select: if currentYear is valid keep it, else latest non-confirmed
+    // Pick year to select: keep current if still valid, else latest non-confirmed CSV year
     let yearToSelect = _currentYear;
     if (!yearToSelect || !allYears.includes(yearToSelect)) {
-      // prefer latest non-confirmed CSV year
       yearToSelect = csvYears.find(y => !confirmedYears.has(y)) || allYears[0];
     }
 
@@ -865,12 +865,9 @@
       if (cur && allYears.includes(cur)) sel.value = cur;
     });
 
-    if (yearToSelect && yearToSelect !== _currentYear) {
-      _currentYear = yearToSelect;
-      loadData(yearToSelect);
-    } else if (yearToSelect) {
-      updateConfirmButton();
-    }
+    // Always reload data so table reflects the latest CSV and saved budgets
+    _currentYear = yearToSelect;
+    loadData(yearToSelect);
   }
 
   function selectYear(year) {

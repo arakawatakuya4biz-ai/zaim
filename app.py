@@ -246,15 +246,20 @@ def api_status():
     rows = conn.execute(
         'SELECT year, confirmed_at, date_range FROM confirmed ORDER BY year DESC'
     ).fetchall()
+    budget_year_rows = conn.execute(
+        'SELECT DISTINCT year FROM budgets ORDER BY year DESC'
+    ).fetchall()
     conn.close()
 
     confirmed = [{'year': r['year'], 'confirmed_at': r['confirmed_at'],
                   'date_range': r['date_range']} for r in rows]
+    budget_years = [r['year'] for r in budget_year_rows]
 
     return jsonify({
         'has_csv': has_csv,
         'csv_years': csv_years,
         'confirmed': confirmed,
+        'budget_years': budget_years,
     })
 
 

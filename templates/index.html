@@ -1112,6 +1112,16 @@
   // ── Main table ───────────────────────────────────────────────────────────
   const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 
+  // Compute actual_month average using months 1..(hlNum-1) in year mode.
+  // Returns null when the standard server-side value should be used as-is.
+  function calcActualMonth(monthly, hlNum) {
+    if (_rangeMode || !hlNum || hlNum <= 1) return null;
+    const upTo = hlNum - 1;
+    let sum = 0;
+    for (let m = 1; m <= upTo; m++) sum += monthly[String(m)] || 0;
+    return Math.round(sum / upTo);
+  }
+
   function renderTable(d) {
     if (!d.categories || d.categories.length === 0) {
       document.getElementById('table-wrap').style.display = 'none';
@@ -1123,6 +1133,7 @@
     document.getElementById('table-wrap').style.display = 'block';
 
     const hl = document.getElementById('month-select').value; // "1"–"12" or ""
+    const hlNum = parseInt(hl) || 0;
 
     // Build _periods from data
     if (_rangeMode && d.periods) {
@@ -1153,11 +1164,14 @@
 
     // ── tbody ──
     const tbody = document.getElementById('main-tbody');
-    const rows = d.categories.map(cat => buildRow(cat, hl)).join('');
-    const totalRow = buildTotalRow(d.total, hl);
+    const rows = d.categories.map(cat => buildRow(cat, hl, hlNum)).join('');
+    const totalRow = buildTotalRow(d.total, hl, hlNum);
     const totalCols = summaryHeaders.length + _periods.length;
+    const noteLabel = (!_rangeMode && hlNum > 1)
+      ? `1〜${hlNum - 1}月の平均`
+      : `実績/期間 ÷ 経過月数（${d.max_month}ヶ月）`;
     const noteRow = `<tr><td colspan="${totalCols}" style="padding:6px 10px; font-size:11px; color:#94a3b8; text-align:left;">
-      * 実績/月 = 実績/期間 ÷ 経過月数（${d.max_month}ヶ月）
+      * 実績/月 = ${noteLabel}
     </td></tr>`;
     tbody.innerHTML = rows + totalRow + noteRow;
 
@@ -1168,8 +1182,9 @@
     });
   }
 
-  function buildRow(cat, hl) {
+  function buildRow(cat, hl, hlNum) {
     const diff = cat.diff;
+    const am = calcActualMonth(cat.monthly, hlNum) ?? cat.actual_month;
     const monthCells = _periods.map((p, i) => {
       const v = cat.monthly[p.key] || 0;
       const isHl = String(p.month) === hl;
@@ -1196,14 +1211,15 @@
       <td>${escHtml(cat.name)}${infoBtn}</td>
       <td>${fmt(cat.budget_month)}</td>
       <td>${fmt(cat.budget_year)}</td>
-      <td>${fmt(cat.actual_month)}</td>
+      <td>${fmt(am)}</td>
       <td${ayAttrs}>${fmt(cat.actual_year)}</td>
       <td class="${diffCls(diff)} separator">${fmtDiff(diff)}</td>
       ${monthCells}
     </tr>`;
   }
 
-  function buildTotalRow(t, hl) {
+  function buildTotalRow(t, hl, hlNum) {
+    const am = calcActualMonth(t.monthly, hlNum) ?? t.actual_month;
     const monthCells = _periods.map((p, i) => {
       const v = t.monthly[p.key] || 0;
       const isHl = String(p.month) === hl;
@@ -1217,7 +1233,7 @@
       <td>合計</td>
       <td>${fmtAbs(t.budget_month)}</td>
       <td>${fmtAbs(t.budget_year)}</td>
-      <td>${fmtAbs(t.actual_month)}</td>
+      <td>${fmtAbs(am)}</td>
       <td>${fmtAbs(t.actual_year)}</td>
       <td class="${diffCls(t.diff)} separator">${fmtDiff(t.diff)}</td>
       ${monthCells}

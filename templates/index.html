@@ -891,7 +891,7 @@
 
   // ── Controls ─────────────────────────────────────────────────────────────
   document.getElementById('month-select').addEventListener('change', () => {
-    if (_data) renderTable(_data);
+    if (_data) { renderSummary(_data); renderTable(_data); }
   });
 
   // ── Confirm button ───────────────────────────────────────────────────────
@@ -1087,15 +1087,36 @@
   // ── Summary cards ────────────────────────────────────────────────────────
   function renderSummary(d) {
     const t = d.total;
-    const surplus = t.diff;
-    const incDiff = d.income_total - t.actual_year;
+    const hlNum = _rangeMode ? 0 : (parseInt(document.getElementById('month-select').value) || 0);
+    const upTo = (!_rangeMode && hlNum > 1) ? hlNum - 1 : 0;
+
+    let budgetPeriod, actualPeriod, incomePeriod, periodLabel;
+    if (upTo > 0) {
+      budgetPeriod = t.budget_month * upTo;
+      actualPeriod = 0;
+      incomePeriod = 0;
+      for (let m = 1; m <= upTo; m++) {
+        actualPeriod += t.monthly[String(m)] || 0;
+        incomePeriod += (d.month_income || {})[String(m)] || 0;
+      }
+      periodLabel = `1〜${upTo}月`;
+    } else {
+      budgetPeriod = t.budget_year;
+      actualPeriod = t.actual_year;
+      incomePeriod = d.income_total;
+      periodLabel = null;
+    }
+
+    const surplus = budgetPeriod - actualPeriod;
+    const incDiff = incomePeriod - actualPeriod;
+    const sfx = periodLabel ? `（${periodLabel}）` : '';
 
     const items = [
-      { label: '予算/年（支出）', value: fmtAbs(t.budget_year) + ' 円', cls: '' },
-      { label: '実績/年（支出）', value: fmtAbs(t.actual_year) + ' 円', cls: '' },
-      { label: '予実差（支出）', value: fmtDiff(surplus) + ' 円', cls: diffCls(surplus) },
-      { label: '収入合計', value: fmtAbs(d.income_total) + ' 円', cls: '' },
-      { label: '収支差額', value: fmtDiff(incDiff) + ' 円', cls: diffCls(incDiff) },
+      { label: `予算${sfx}（支出）`,  value: fmtAbs(budgetPeriod) + ' 円', cls: '' },
+      { label: `実績${sfx}（支出）`,  value: fmtAbs(actualPeriod) + ' 円', cls: '' },
+      { label: `予実差${sfx}（支出）`, value: fmtDiff(surplus)     + ' 円', cls: diffCls(surplus) },
+      { label: `収入合計${sfx}`,       value: fmtAbs(incomePeriod) + ' 円', cls: '' },
+      { label: `収支差額${sfx}`,       value: fmtDiff(incDiff)     + ' 円', cls: diffCls(incDiff) },
     ];
 
     document.getElementById('summary-grid').innerHTML = items.map(it => `

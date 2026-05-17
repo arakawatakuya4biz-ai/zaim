@@ -735,7 +735,7 @@
             <th class="sortable sort-active" data-col="date">日付<i class="sort-icon">↑</i></th>
             <th>内訳</th>
             <th>お店</th>
-            <th>品目・メモ</th>
+            <th>品目</th>
             <th class="num sortable" data-col="amount">金額<i class="sort-icon">↕</i></th>
           </tr>
         </thead>
@@ -1326,9 +1326,30 @@
     document.getElementById('detail-modal-overlay').classList.remove('open');
   }
 
+  function aggregateDetailTxns() {
+    const groups = new Map();
+    for (const t of _detailTxns) {
+      const key = `${t.date}\x00${t.shop}\x00${t.subcategory}`;
+      if (groups.has(key)) {
+        const g = groups.get(key);
+        g.amount += t.amount;
+        if (!g.item && (t.item || t.memo)) g.item = t.item || t.memo;
+      } else {
+        groups.set(key, {
+          date: t.date,
+          subcategory: t.subcategory,
+          shop: t.shop,
+          item: t.item || t.memo || '',
+          amount: t.amount,
+        });
+      }
+    }
+    return Array.from(groups.values());
+  }
+
   function sortedDetailTxns() {
     const { col, dir } = _detailSort;
-    return [..._detailTxns].sort((a, b) => {
+    return aggregateDetailTxns().sort((a, b) => {
       let va, vb;
       if (col === 'amount') { va = a.amount; vb = b.amount; }
       else { va = a.date; vb = b.date; }
@@ -1340,7 +1361,6 @@
 
   function renderDetailBody() {
     const tbody = document.getElementById('detail-tbody');
-    // Update header sort indicators
     document.querySelectorAll('#detail-thead th.sortable').forEach(th => {
       const isActive = th.dataset.col === _detailSort.col;
       th.classList.toggle('sort-active', isActive);
@@ -1354,16 +1374,13 @@
     }
     const txns = sortedDetailTxns();
     const total = txns.reduce((s, t) => s + t.amount, 0);
-    const rows = txns.map(t => {
-      const shopItem = [t.item, t.memo].filter(Boolean).join(' / ');
-      return `<tr>
-        <td>${escHtml(t.date)}</td>
-        <td>${escHtml(t.subcategory)}</td>
-        <td>${escHtml(t.shop)}</td>
-        <td>${escHtml(shopItem)}</td>
-        <td class="num">${t.amount.toLocaleString('ja-JP')}</td>
-      </tr>`;
-    }).join('');
+    const rows = txns.map(t => `<tr>
+      <td>${escHtml(t.date)}</td>
+      <td>${escHtml(t.subcategory)}</td>
+      <td>${escHtml(t.shop)}</td>
+      <td>${escHtml(t.item)}</td>
+      <td class="num">${t.amount.toLocaleString('ja-JP')}</td>
+    </tr>`).join('');
     const totalRow = `<tr class="detail-total">
       <td colspan="4" style="text-align:right;padding:8px 10px;">合計（${txns.length}件）</td>
       <td class="num" style="padding:8px 10px;">${total.toLocaleString('ja-JP')}</td>

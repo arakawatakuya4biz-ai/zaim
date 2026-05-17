@@ -434,6 +434,10 @@
       position: sticky; top: 0;
     }
     .detail-table th.num { text-align: right; }
+    .detail-table th.sortable { cursor: pointer; user-select: none; }
+    .detail-table th.sortable:hover { background: var(--gray-200); }
+    .detail-table th .sort-icon { margin-left: 4px; opacity: 0.4; font-style: normal; }
+    .detail-table th.sort-active .sort-icon { opacity: 1; color: var(--primary); }
     .detail-table td { padding: 6px 10px; border-bottom: 1px solid var(--gray-100); }
     .detail-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
     .detail-table tr:hover td { background: var(--gray-50); }
@@ -726,13 +730,13 @@
     </div>
     <div class="modal-body" style="max-height:55vh; overflow-y:auto;">
       <table class="detail-table">
-        <thead>
+        <thead id="detail-thead">
           <tr>
-            <th>日付</th>
+            <th class="sortable sort-active" data-col="date">日付<i class="sort-icon">↑</i></th>
             <th>内訳</th>
             <th>お店</th>
             <th>品目・メモ</th>
-            <th class="num">金額</th>
+            <th class="num sortable" data-col="amount">金額<i class="sort-icon">↕</i></th>
           </tr>
         </thead>
         <tbody id="detail-tbody"></tbody>
@@ -763,6 +767,8 @@
   let _statusCache = null;
   let _periods = [];    // [{key, label, year, month}] current column set
   let _rangeMode = false;
+  let _detailTxns = [];
+  let _detailSort = { col: 'date', dir: 'asc' };
 
   // ── Upload strip ─────────────────────────────────────────────────────────
   const strip = document.getElementById('upload-strip');
@@ -1274,6 +1280,16 @@
   document.getElementById('detail-modal-overlay').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeDetailModal();
   });
+  document.getElementById('detail-thead').addEventListener('click', e => {
+    const th = e.target.closest('th.sortable');
+    if (!th) return;
+    const col = th.dataset.col;
+    _detailSort = {
+      col,
+      dir: _detailSort.col === col && _detailSort.dir === 'asc' ? 'desc' : 'asc',
+    };
+    renderDetailBody();
+  });
 
   // Click delegation for drilldown cells
   document.getElementById('main-tbody').addEventListener('click', e => {
@@ -1287,6 +1303,8 @@
       ? `${category} — ${year}年${month}月`
       : `${category} — ${year}年（全期間）`;
     document.getElementById('detail-modal-title').textContent = title;
+    _detailTxns = [];
+    _detailSort = { col: 'date', dir: 'asc' };
     document.getElementById('detail-note').textContent = '';
     document.getElementById('detail-tbody').innerHTML =
       '<tr><td colspan="5" style="text-align:center;padding:24px;color:#94a3b8;">読込中…</td></tr>';
@@ -1295,7 +1313,9 @@
     try {
       const res = await fetch(`/api/detail/${year}/${month}/${encodeURIComponent(category)}`);
       const d = await res.json();
-      renderDetailTable(d);
+      _detailTxns = d.transactions || [];
+      document.getElementById('detail-note').textContent = d.note || '';
+      renderDetailBody();
     } catch (err) {
       document.getElementById('detail-tbody').innerHTML =
         `<tr><td colspan="5" style="color:var(--danger);padding:10px;">${escHtml(err.message)}</td></tr>`;
@@ -1306,14 +1326,33 @@
     document.getElementById('detail-modal-overlay').classList.remove('open');
   }
 
-  function renderDetailTable(d) {
+  function sortedDetailTxns() {
+    const { col, dir } = _detailSort;
+    return [..._detailTxns].sort((a, b) => {
+      let va, vb;
+      if (col === 'amount') { va = a.amount; vb = b.amount; }
+      else { va = a.date; vb = b.date; }
+      if (va < vb) return dir === 'asc' ? -1 : 1;
+      if (va > vb) return dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  function renderDetailBody() {
     const tbody = document.getElementById('detail-tbody');
-    const txns = d.transactions || [];
-    if (txns.length === 0) {
+    // Update header sort indicators
+    document.querySelectorAll('#detail-thead th.sortable').forEach(th => {
+      const isActive = th.dataset.col === _detailSort.col;
+      th.classList.toggle('sort-active', isActive);
+      th.querySelector('.sort-icon').textContent =
+        isActive ? (_detailSort.dir === 'asc' ? '↑' : '↓') : '↕';
+    });
+
+    if (_detailTxns.length === 0) {
       tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#94a3b8;">明細がありません</td></tr>';
-      document.getElementById('detail-note').textContent = d.note || '';
       return;
     }
+    const txns = sortedDetailTxns();
     const total = txns.reduce((s, t) => s + t.amount, 0);
     const rows = txns.map(t => {
       const shopItem = [t.item, t.memo].filter(Boolean).join(' / ');
@@ -1326,11 +1365,10 @@
       </tr>`;
     }).join('');
     const totalRow = `<tr class="detail-total">
-      <td colspan="4" style="text-align:right;padding:8px 10px;">合計</td>
+      <td colspan="4" style="text-align:right;padding:8px 10px;">合計（${txns.length}件）</td>
       <td class="num" style="padding:8px 10px;">${total.toLocaleString('ja-JP')}</td>
     </tr>`;
     tbody.innerHTML = rows + totalRow;
-    document.getElementById('detail-note').textContent = d.note || '';
   }
 
   // ── Alert ─────────────────────────────────────────────────────────────────

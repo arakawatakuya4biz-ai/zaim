@@ -1167,7 +1167,7 @@
 
     // ── thead ──
     const thead = document.getElementById('main-thead');
-    const summaryHeaders = ['費目', '予算/月', _rangeMode ? '予算/期間' : '予算/年', '実績/月*', _rangeMode ? '実績/期間' : '実績/年', '予実差'];
+    const summaryHeaders = ['費目', '予算/月', _rangeMode ? '予算/期間' : '予算/年', '実績/月*', '予実差（月）', _rangeMode ? '実績/期間' : '実績/年', '予実差'];
 
     const thSummary = summaryHeaders.map((h, i) => {
       const sep = i === summaryHeaders.length - 1 ? ' class="separator"' : '';
@@ -1225,11 +1225,13 @@
       ? ` class="cell-drilldown" data-year="${_currentYear}" data-month="0" data-cat="${escHtml(cat.name)}"`
       : '';
 
+    const diffM = cat.budget_month - am;
     return `<tr>
       <td>${escHtml(cat.name)}${infoBtn}</td>
       <td>${fmt(cat.budget_month)}</td>
       <td>${fmt(cat.budget_year)}</td>
       <td>${fmt(am)}</td>
+      <td class="${diffCls(diffM)}">${fmtDiff(diffM)}</td>
       <td${ayAttrs}>${fmt(cat.actual_year)}</td>
       <td class="${diffCls(diff)} separator">${fmtDiff(diff)}</td>
       ${monthCells}
@@ -1247,11 +1249,13 @@
       return `<td class="cell-month${hlCls}${zeroCls}${sepCls}">${fmt(v)}</td>`;
     }).join('');
 
+    const diffM = t.budget_month - am;
     return `<tr class="total-row">
       <td>合計</td>
       <td>${fmtAbs(t.budget_month)}</td>
       <td>${fmtAbs(t.budget_year)}</td>
       <td>${fmtAbs(am)}</td>
+      <td class="${diffCls(diffM)}">${fmtDiff(diffM)}</td>
       <td>${fmtAbs(t.actual_year)}</td>
       <td class="${diffCls(t.diff)} separator">${fmtDiff(t.diff)}</td>
       ${monthCells}

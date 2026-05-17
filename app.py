@@ -65,6 +65,20 @@ def init_db():
             PRIMARY KEY (year, category)
         )
     ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS confirmed_transactions (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            year       INTEGER NOT NULL,
+            month      INTEGER NOT NULL,
+            date       TEXT    NOT NULL,
+            category   TEXT    NOT NULL,
+            subcategory TEXT   DEFAULT '',
+            shop       TEXT    DEFAULT '',
+            item       TEXT    DEFAULT '',
+            memo       TEXT    DEFAULT '',
+            amount     INTEGER NOT NULL
+        )
+    ''')
     conn.commit()
     conn.close()
 
@@ -363,6 +377,32 @@ def confirm_year(year):
         'INSERT OR REPLACE INTO confirmed (year, confirmed_at, date_range, data) VALUES (?, ?, ?, ?)',
         (year, confirmed_at, date_range, json.dumps(stored, ensure_ascii=False))
     )
+    # Store raw transactions for drill-down
+    conn.execute('DELETE FROM confirmed_transactions WHERE year = ?', (year,))
+    for _, row in pf.sort_values('日付').iterrows():
+        def _sv(v):
+            if v is None:
+                return ''
+            try:
+                import math
+                if isinstance(v, float) and math.isnan(v):
+                    return ''
+            except Exception:
+                pass
+            return str(v).strip()
+        conn.execute(
+            '''INSERT INTO confirmed_transactions
+               (year, month, date, category, subcategory, shop, item, memo, amount)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            (year, int(row['月']),
+             row['日付'].strftime('%Y/%m/%d'),
+             _sv(row.get('カテゴリ')),
+             _sv(row.get('カテゴリの内訳')),
+             _sv(row.get('お店')),
+             _sv(row.get('品目')),
+             _sv(row.get('メモ')),
+             int(row['支出']))
+        )
     conn.commit()
     conn.close()
 
@@ -405,6 +445,225 @@ def save_budget(year):
     conn.close()
 
     return jsonify({'success': True})
+
+
+# ── Detail (drill-down) ───────────────────────────────────────────────────────
+
+def _get_txns_from_csv(year, month):
+    """Return list of transactions from in-memory CSV for (year, month)."""
+    import math
+    with _lock:
+        df = _df
+    if df is None:
+        return None
+    pf = build_payment_df(df)
+    mask = (pf['年'] == year) & (pf['月'] == month)
+    filtered = pf[mask].sort_values('日付')
+    txns = []
+    for _, row in filtered.iterrows():
+        def sv(v):
+            if v is None:
+                return ''
+            try:
+                if isinstance(v, float) and math.isnan(v):
+                    return ''
+            except Exception:
+                pass
+            return str(v).strip()
+        txns.append({
+            'date': row['日付'].strftime('%Y/%m/%d'),
+            'subcategory': sv(row.get('カテゴリの内訳')),
+            'shop': sv(row.get('お店')),
+            'item': sv(row.get('品目')),
+            'memo': sv(row.get('メモ')),
+            'amount': int(row['支出']),
+            'category': sv(row.get('カテゴリ')),
+        })
+    return txns
+
+
+@app.route('/api/detail/<int:year>/<int:month>/<path:category>')
+def api_detail(year, month, category):
+    """Return transactions for a given year/month/category. month=0 means all months."""
+    conn = get_db()
+    is_confirmed = conn.execute(
+        'SELECT 1 FROM confirmed WHERE year = ?', (year,)
+    ).fetchone() is not None
+
+    if is_confirmed:
+        if month > 0:
+            rows = conn.execute(
+                '''SELECT date, subcategory, shop, item, memo, amount
+                   FROM confirmed_transactions
+                   WHERE year=? AND month=? AND category=?
+                   ORDER BY date''',
+                (year, month, category)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                '''SELECT date, subcategory, shop, item, memo, amount
+                   FROM confirmed_transactions
+                   WHERE year=? AND category=?
+                   ORDER BY date''',
+                (year, category)
+            ).fetchall()
+        conn.close()
+        if rows:
+            return jsonify({'transactions': [dict(r) for r in rows]})
+        # No stored transactions → fall back to CSV
+    else:
+        conn.close()
+
+    txns = _get_txns_from_csv(year, month) if month > 0 else None
+    if month == 0 and _df is not None:
+        with _lock:
+            df = _df
+        import math
+        pf = build_payment_df(df)
+        filtered = pf[(pf['年'] == year) & (pf['カテゴリ'] == category)].sort_values('日付')
+        txns = []
+        for _, row in filtered.iterrows():
+            def sv(v):
+                if v is None:
+                    return ''
+                try:
+                    if isinstance(v, float) and math.isnan(v):
+                        return ''
+                except Exception:
+                    pass
+                return str(v).strip()
+            txns.append({
+                'date': row['日付'].strftime('%Y/%m/%d'),
+                'subcategory': sv(row.get('カテゴリの内訳')),
+                'shop': sv(row.get('お店')),
+                'item': sv(row.get('品目')),
+                'memo': sv(row.get('メモ')),
+                'amount': int(row['支出']),
+                'category': sv(row.get('カテゴリ')),
+            })
+    elif txns is not None:
+        txns = [t for t in txns if t['category'] == category]
+
+    if txns is None:
+        return jsonify({'transactions': [], 'note': 'CSVが読み込まれていません'})
+    return jsonify({'transactions': txns})
+
+
+# ── Range aggregation ─────────────────────────────────────────────────────────
+
+@app.route('/api/data/range')
+def api_data_range():
+    from_str = request.args.get('from', '')
+    to_str = request.args.get('to', '')
+    try:
+        from_y, from_m = int(from_str[:4]), int(from_str[5:7])
+        to_y, to_m = int(to_str[:4]), int(to_str[5:7])
+    except (ValueError, IndexError):
+        return jsonify({'error': '期間の指定が不正です (YYYY-MM 形式)'}), 400
+
+    if (from_y, from_m) > (to_y, to_m):
+        return jsonify({'error': '開始年月が終了年月より後です'}), 400
+
+    periods = []
+    y, m = from_y, from_m
+    while (y, m) <= (to_y, to_m):
+        periods.append((y, m, f'{y}-{m:02d}'))
+        m += 1
+        if m > 12:
+            m, y = 1, y + 1
+    if len(periods) > 36:
+        return jsonify({'error': '期間は最大36ヶ月までです'}), 400
+
+    period_keys = [p[2] for p in periods]
+    period_labels = [f'{p[0]}/{p[1]}' for p in periods]
+    n_months = len(periods)
+
+    needed_years = sorted(set(p[0] for p in periods))
+    conn = get_db()
+    conf_rows = conn.execute(
+        'SELECT year, data FROM confirmed WHERE year IN ({})'.format(
+            ','.join('?' * len(needed_years))),
+        needed_years
+    ).fetchall()
+    conn.close()
+    conf_data = {r['year']: json.loads(r['data']) for r in conf_rows}
+
+    with _lock:
+        df = _df
+
+    cats_data = {}
+    income_data = {pk: 0 for _, _, pk in periods}
+
+    for yr, mo, pk in periods:
+        ms = str(mo)
+        if yr in conf_data:
+            for cat, mv in conf_data[yr].get('categories', {}).items():
+                cats_data.setdefault(cat, {k: 0 for k in period_keys})[pk] = int(mv.get(ms, 0))
+            income_data[pk] = int(conf_data[yr].get('income_monthly', {}).get(ms, 0))
+        elif df is not None:
+            pf = build_payment_df(df)
+            month_pf = pf[(pf['年'] == yr) & (pf['月'] == mo)]
+            for cat, amount in month_pf.groupby('カテゴリ')['支出'].sum().items():
+                cats_data.setdefault(cat, {k: 0 for k in period_keys})[pk] = int(amount)
+            inf = build_income_df(df)
+            income_data[pk] = int(inf[(inf['年'] == yr) & (inf['月'] == mo)]['収入'].sum())
+
+    for cat in cats_data:
+        for pk in period_keys:
+            cats_data[cat].setdefault(pk, 0)
+
+    budget_map = get_budget_for_year(from_y)
+    extra_cats = sorted(set(cats_data.keys()) - set(CATEGORY_ORDER))
+    all_cats = CATEGORY_ORDER + extra_cats
+
+    categories = []
+    total_bm = total_bt = 0
+    for cat in all_cats:
+        mv = cats_data.get(cat, {pk: 0 for pk in period_keys})
+        ay = sum(mv.values())
+        bm = budget_map.get(cat, {}).get('amount', DEFAULT_BUDGET.get(cat, 0))
+        bt = bm * n_months
+        reason = budget_map.get(cat, {}).get('reason', '')
+        avg = round(ay / n_months) if n_months > 0 else 0
+        total_bm += bm
+        total_bt += bt
+        categories.append({
+            'name': cat,
+            'budget_month': bm,
+            'budget_year': bt,
+            'actual_month': avg,
+            'actual_year': ay,
+            'diff': bt - ay,
+            'monthly': mv,
+            'reason': reason,
+        })
+
+    total_ay = sum(c['actual_year'] for c in categories)
+    total_am = round(total_ay / n_months) if n_months > 0 else 0
+    period_totals = {pk: sum(c['monthly'].get(pk, 0) for c in categories) for pk in period_keys}
+
+    return jsonify({
+        'status': 'ok',
+        'mode': 'range',
+        'from': from_str,
+        'to': to_str,
+        'periods': period_keys,
+        'period_labels': period_labels,
+        'date_range': f'{from_y}/{from_m:02d} ～ {to_y}/{to_m:02d}',
+        'max_month': n_months,
+        'categories': categories,
+        'total': {
+            'budget_month': total_bm,
+            'budget_year': total_bt,
+            'actual_month': total_am,
+            'actual_year': total_ay,
+            'diff': total_bt - total_ay,
+            'monthly': period_totals,
+        },
+        'income_total': sum(income_data.values()),
+        'month_income': income_data,
+        'is_confirmed': False,
+    })
 
 
 # ── Init ──────────────────────────────────────────────────────────────────────

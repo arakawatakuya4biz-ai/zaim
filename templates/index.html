@@ -397,6 +397,49 @@
     }
     .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
 
+    /* ── Period picker ── */
+    .period-picker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-200);
+      flex-wrap: wrap;
+    }
+    .period-picker label { font-weight: 600; color: var(--gray-700); font-size: 12px; white-space: nowrap; }
+    .period-picker select {
+      border: 1px solid var(--gray-200); border-radius: 5px;
+      padding: 4px 8px; font-size: 13px; color: var(--gray-700); background: #fff;
+    }
+    .period-picker .period-sep { color: var(--gray-400); font-size: 13px; }
+    .period-mode-tag {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 700; background: #fef3c7; color: #92400e;
+    }
+
+    /* ── Clickable amount cells ── */
+    td.cell-drilldown {
+      cursor: pointer;
+      text-decoration: underline dotted var(--gray-400);
+    }
+    td.cell-drilldown:hover { background: #eff6ff !important; color: var(--primary); }
+
+    /* ── Detail modal table ── */
+    .detail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .detail-table th {
+      background: var(--gray-100); padding: 7px 10px;
+      text-align: left; font-size: 12px; font-weight: 700; color: var(--gray-600);
+      border-bottom: 1px solid var(--gray-200); white-space: nowrap;
+      position: sticky; top: 0;
+    }
+    .detail-table th.num { text-align: right; }
+    .detail-table td { padding: 6px 10px; border-bottom: 1px solid var(--gray-100); }
+    .detail-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .detail-table tr:hover td { background: var(--gray-50); }
+    .detail-total { font-weight: 700; font-size: 14px; }
+    .detail-note { font-size: 12px; color: var(--gray-400); }
+
     /* ── Modals ── */
     .modal-overlay {
       display: none;
@@ -554,24 +597,38 @@
       <!-- Year tabs -->
       <div class="year-tabs" id="year-tabs"></div>
 
+      <!-- Period picker -->
+      <div class="period-picker">
+        <label>期間</label>
+        <select id="from-year"></select>
+        <select id="from-month">
+          <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+          <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+          <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+          <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+        </select>
+        <span class="period-sep">〜</span>
+        <select id="to-year"></select>
+        <select id="to-month">
+          <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+          <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+          <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+          <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+        </select>
+        <button class="btn btn-sm btn-primary" id="btn-apply-range" type="button">適用</button>
+        <span class="period-mode-tag" id="range-mode-tag" style="display:none">カスタム期間</span>
+      </div>
+
       <!-- Controls -->
       <div class="controls-bar">
         <div class="control-group">
           <label for="month-select">月ハイライト</label>
           <select id="month-select">
             <option value="">なし</option>
-            <option value="1">1月</option>
-            <option value="2">2月</option>
-            <option value="3">3月</option>
-            <option value="4">4月</option>
-            <option value="5">5月</option>
-            <option value="6">6月</option>
-            <option value="7">7月</option>
-            <option value="8">8月</option>
-            <option value="9">9月</option>
-            <option value="10">10月</option>
-            <option value="11">11月</option>
-            <option value="12">12月</option>
+            <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+            <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+            <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+            <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
           </select>
         </div>
         <div class="controls-right">
@@ -660,6 +717,34 @@
   </div>
 </div>
 
+<!-- Detail modal -->
+<div class="modal-overlay" id="detail-modal-overlay">
+  <div class="modal" style="max-width:820px">
+    <div class="modal-header">
+      <span class="modal-title" id="detail-modal-title"></span>
+      <button class="modal-close" id="detail-modal-close" type="button">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:55vh; overflow-y:auto;">
+      <table class="detail-table">
+        <thead>
+          <tr>
+            <th>日付</th>
+            <th>内訳</th>
+            <th>お店</th>
+            <th>品目・メモ</th>
+            <th class="num">金額</th>
+          </tr>
+        </thead>
+        <tbody id="detail-tbody"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <span class="detail-note" id="detail-note" style="margin-right:auto"></span>
+      <button class="btn btn-outline btn-sm" id="detail-close-btn" type="button">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <script>
   'use strict';
 
@@ -675,7 +760,9 @@
   // ── State ────────────────────────────────────────────────────────────────
   let _data = null;
   let _currentYear = null;
-  let _statusCache = null; // {has_csv, csv_years, confirmed}
+  let _statusCache = null;
+  let _periods = [];    // [{key, label, year, month}] current column set
+  let _rangeMode = false;
 
   // ── Upload strip ─────────────────────────────────────────────────────────
   const strip = document.getElementById('upload-strip');
@@ -764,6 +851,14 @@
       tabsEl.appendChild(tab);
     });
 
+    // Populate period picker year selects
+    ['from-year', 'to-year'].forEach(id => {
+      const sel = document.getElementById(id);
+      const cur = parseInt(sel.value);
+      sel.innerHTML = allYears.map(y => `<option value="${y}">${y}年</option>`).join('');
+      if (cur && allYears.includes(cur)) sel.value = cur;
+    });
+
     if (yearToSelect && yearToSelect !== _currentYear) {
       _currentYear = yearToSelect;
       loadData(yearToSelect);
@@ -773,10 +868,17 @@
   }
 
   function selectYear(year) {
-    if (year === _currentYear) return;
+    if (year === _currentYear && !_rangeMode) return;
     _currentYear = year;
+    _rangeMode = false;
+    document.getElementById('range-mode-tag').style.display = 'none';
 
-    // Update tab active state
+    // Sync period picker to Jan–Dec of this year
+    document.getElementById('from-year').value = year;
+    document.getElementById('from-month').value = '1';
+    document.getElementById('to-year').value = year;
+    document.getElementById('to-month').value = '12';
+
     document.querySelectorAll('.year-tab').forEach(tab => {
       tab.classList.toggle('active', parseInt(tab.dataset.year) === year);
     });
@@ -934,6 +1036,7 @@
   async function loadData(year) {
     if (!year) year = _currentYear;
     if (!year) return;
+    _rangeMode = false;
 
     document.getElementById('loading').style.display = 'block';
     document.getElementById('table-wrap').style.display = 'none';
@@ -1013,34 +1116,45 @@
     document.getElementById('empty-state').style.display = 'none';
     document.getElementById('table-wrap').style.display = 'block';
 
-    const hl = document.getElementById('month-select').value;
+    const hl = document.getElementById('month-select').value; // "1"–"12" or ""
+
+    // Build _periods from data
+    if (_rangeMode && d.periods) {
+      _periods = d.periods.map((pk, i) => {
+        const [y, m] = pk.split('-').map(Number);
+        return { key: pk, label: d.period_labels[i], year: y, month: m };
+      });
+    } else {
+      _periods = Array.from({ length: 12 }, (_, i) => ({
+        key: String(i + 1), label: MONTHS[i], year: _currentYear, month: i + 1,
+      }));
+    }
 
     // ── thead ──
     const thead = document.getElementById('main-thead');
-    const summaryHeaders = ['費目', '予算/月', '予算/年', '実績/月*', '実績/年', '予実差'];
+    const summaryHeaders = ['費目', '予算/月', _rangeMode ? '予算/期間' : '予算/年', '実績/月*', _rangeMode ? '実績/期間' : '実績/年', '予実差'];
 
     const thSummary = summaryHeaders.map((h, i) => {
       const sep = i === summaryHeaders.length - 1 ? ' class="separator"' : '';
       return `<th${sep}>${h}</th>`;
     }).join('');
-    const thMonths = MONTHS.map((h, i) => {
-      const m = i + 1;
-      const cls = `th-month${String(m) === hl ? ' th-highlight' : ''}`;
-      return `<th class="${cls}">${h}</th>`;
+    const thPeriods = _periods.map(p => {
+      const isHl = String(p.month) === hl;
+      return `<th class="th-month${isHl ? ' th-highlight' : ''}">${p.label}</th>`;
     }).join('');
 
-    thead.innerHTML = `<tr>${thSummary}${thMonths}</tr>`;
+    thead.innerHTML = `<tr>${thSummary}${thPeriods}</tr>`;
 
     // ── tbody ──
     const tbody = document.getElementById('main-tbody');
     const rows = d.categories.map(cat => buildRow(cat, hl)).join('');
     const totalRow = buildTotalRow(d.total, hl);
-    const noteRow = `<tr><td colspan="${summaryHeaders.length + 12}" style="padding:6px 10px; font-size:11px; color:#94a3b8; text-align:left;">
-      * 実績/月 = 実績/年 ÷ 経過月数（${d.max_month}ヶ月）
+    const totalCols = summaryHeaders.length + _periods.length;
+    const noteRow = `<tr><td colspan="${totalCols}" style="padding:6px 10px; font-size:11px; color:#94a3b8; text-align:left;">
+      * 実績/月 = 実績/期間 ÷ 経過月数（${d.max_month}ヶ月）
     </td></tr>`;
     tbody.innerHTML = rows + totalRow + noteRow;
 
-    // Attach info button listeners
     tbody.querySelectorAll('.info-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         showReasonModal(btn.dataset.cat, btn.dataset.reason);
@@ -1050,17 +1164,26 @@
 
   function buildRow(cat, hl) {
     const diff = cat.diff;
-    const monthCells = Array.from({ length: 12 }, (_, i) => {
-      const m = i + 1;
-      const v = cat.monthly[String(m)] || 0;
-      const hlCls = String(m) === hl ? ' cell-highlight' : '';
+    const monthCells = _periods.map((p, i) => {
+      const v = cat.monthly[p.key] || 0;
+      const isHl = String(p.month) === hl;
+      const hlCls = isHl ? ' cell-highlight' : '';
       const zeroCls = v === 0 ? ' cell-zero' : '';
-      const sep = m === 1 ? ' separator' : '';
-      return `<td class="cell-month${hlCls}${zeroCls}${sep}">${fmt(v)}</td>`;
+      const sepCls = i === 0 ? ' separator' : '';
+      const drillCls = v > 0 ? ' cell-drilldown' : '';
+      const drillAttrs = v > 0
+        ? ` data-year="${p.year}" data-month="${p.month}" data-cat="${escHtml(cat.name)}"`
+        : '';
+      return `<td class="cell-month${hlCls}${zeroCls}${sepCls}${drillCls}"${drillAttrs}>${fmt(v)}</td>`;
     }).join('');
 
     const infoBtn = (cat.reason && cat.reason.trim())
       ? `<button class="info-btn" data-cat="${escHtml(cat.name)}" data-reason="${escHtml(cat.reason)}" title="メモを表示" type="button">ℹ</button>`
+      : '';
+
+    // actual_year cell: drilldown only in single-year mode
+    const ayAttrs = !_rangeMode && cat.actual_year > 0
+      ? ` class="cell-drilldown" data-year="${_currentYear}" data-month="0" data-cat="${escHtml(cat.name)}"`
       : '';
 
     return `<tr>
@@ -1068,20 +1191,20 @@
       <td>${fmt(cat.budget_month)}</td>
       <td>${fmt(cat.budget_year)}</td>
       <td>${fmt(cat.actual_month)}</td>
-      <td>${fmt(cat.actual_year)}</td>
+      <td${ayAttrs}>${fmt(cat.actual_year)}</td>
       <td class="${diffCls(diff)} separator">${fmtDiff(diff)}</td>
       ${monthCells}
     </tr>`;
   }
 
   function buildTotalRow(t, hl) {
-    const monthCells = Array.from({ length: 12 }, (_, i) => {
-      const m = i + 1;
-      const v = t.monthly[String(m)] || 0;
-      const hlCls = String(m) === hl ? ' cell-highlight' : '';
+    const monthCells = _periods.map((p, i) => {
+      const v = t.monthly[p.key] || 0;
+      const isHl = String(p.month) === hl;
+      const hlCls = isHl ? ' cell-highlight' : '';
       const zeroCls = v === 0 ? ' cell-zero' : '';
-      const sep = m === 1 ? ' separator' : '';
-      return `<td class="cell-month${hlCls}${zeroCls}${sep}">${fmt(v)}</td>`;
+      const sepCls = i === 0 ? ' separator' : '';
+      return `<td class="cell-month${hlCls}${zeroCls}${sepCls}">${fmt(v)}</td>`;
     }).join('');
 
     return `<tr class="total-row">
@@ -1093,6 +1216,121 @@
       <td class="${diffCls(t.diff)} separator">${fmtDiff(t.diff)}</td>
       ${monthCells}
     </tr>`;
+  }
+
+  // ── Range mode ───────────────────────────────────────────────────────────
+  async function loadRangeData(from, to) {
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('table-wrap').style.display = 'none';
+    document.getElementById('empty-state').style.display = 'none';
+    try {
+      const res = await fetch(`/api/data/range?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+      const d = await res.json();
+      document.getElementById('loading').style.display = 'none';
+
+      if (d.error) { showAlert(d.error, 'error'); return; }
+
+      document.getElementById('status-badge').textContent = 'カスタム期間';
+      document.getElementById('status-badge').className = 'badge badge-blue';
+      document.getElementById('status-date-range').textContent = d.date_range;
+      document.getElementById('status-meta').textContent = `経過月数: ${d.max_month} ヶ月`;
+      document.getElementById('header-meta').textContent = d.date_range;
+      document.getElementById('range-mode-tag').style.display = '';
+      document.getElementById('btn-confirm').style.display = 'none';
+
+      _data = d;
+      renderSummary(d);
+      renderTable(d);
+    } catch (err) {
+      document.getElementById('loading').style.display = 'none';
+      showAlert('データ取得エラー: ' + err.message, 'error');
+    }
+  }
+
+  function applyRange() {
+    const fromY = document.getElementById('from-year').value;
+    const fromM = String(document.getElementById('from-month').value).padStart(2, '0');
+    const toY = document.getElementById('to-year').value;
+    const toM = String(document.getElementById('to-month').value).padStart(2, '0');
+    if (!fromY || !toY) return;
+
+    // Check if this is just a single year Jan-Dec → use normal year mode
+    if (fromY === toY && fromM === '01' && toM === '12') {
+      selectYear(parseInt(fromY));
+      return;
+    }
+
+    _rangeMode = true;
+    _currentYear = null;
+    document.querySelectorAll('.year-tab').forEach(t => t.classList.remove('active'));
+    loadRangeData(`${fromY}-${fromM}`, `${toY}-${toM}`);
+  }
+
+  document.getElementById('btn-apply-range').addEventListener('click', applyRange);
+
+  // ── Detail modal ──────────────────────────────────────────────────────────
+  document.getElementById('detail-modal-close').addEventListener('click', closeDetailModal);
+  document.getElementById('detail-close-btn').addEventListener('click', closeDetailModal);
+  document.getElementById('detail-modal-overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeDetailModal();
+  });
+
+  // Click delegation for drilldown cells
+  document.getElementById('main-tbody').addEventListener('click', e => {
+    const td = e.target.closest('td.cell-drilldown');
+    if (!td) return;
+    showDetailModal(parseInt(td.dataset.year), parseInt(td.dataset.month), td.dataset.cat);
+  });
+
+  async function showDetailModal(year, month, category) {
+    const title = month > 0
+      ? `${category} — ${year}年${month}月`
+      : `${category} — ${year}年（全期間）`;
+    document.getElementById('detail-modal-title').textContent = title;
+    document.getElementById('detail-note').textContent = '';
+    document.getElementById('detail-tbody').innerHTML =
+      '<tr><td colspan="5" style="text-align:center;padding:24px;color:#94a3b8;">読込中…</td></tr>';
+    document.getElementById('detail-modal-overlay').classList.add('open');
+
+    try {
+      const res = await fetch(`/api/detail/${year}/${month}/${encodeURIComponent(category)}`);
+      const d = await res.json();
+      renderDetailTable(d);
+    } catch (err) {
+      document.getElementById('detail-tbody').innerHTML =
+        `<tr><td colspan="5" style="color:var(--danger);padding:10px;">${escHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  function closeDetailModal() {
+    document.getElementById('detail-modal-overlay').classList.remove('open');
+  }
+
+  function renderDetailTable(d) {
+    const tbody = document.getElementById('detail-tbody');
+    const txns = d.transactions || [];
+    if (txns.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#94a3b8;">明細がありません</td></tr>';
+      document.getElementById('detail-note').textContent = d.note || '';
+      return;
+    }
+    const total = txns.reduce((s, t) => s + t.amount, 0);
+    const rows = txns.map(t => {
+      const shopItem = [t.item, t.memo].filter(Boolean).join(' / ');
+      return `<tr>
+        <td>${escHtml(t.date)}</td>
+        <td>${escHtml(t.subcategory)}</td>
+        <td>${escHtml(t.shop)}</td>
+        <td>${escHtml(shopItem)}</td>
+        <td class="num">${t.amount.toLocaleString('ja-JP')}</td>
+      </tr>`;
+    }).join('');
+    const totalRow = `<tr class="detail-total">
+      <td colspan="4" style="text-align:right;padding:8px 10px;">合計</td>
+      <td class="num" style="padding:8px 10px;">${total.toLocaleString('ja-JP')}</td>
+    </tr>`;
+    tbody.innerHTML = rows + totalRow;
+    document.getElementById('detail-note').textContent = d.note || '';
   }
 
   // ── Alert ─────────────────────────────────────────────────────────────────
@@ -1114,9 +1352,11 @@
 
   // ── Init ──────────────────────────────────────────────────────────────────
   (async () => {
-    // Auto-highlight current month
     const ms = document.getElementById('month-select');
     ms.value = String(new Date().getMonth() + 1);
+
+    // Default to-month = current month
+    document.getElementById('to-month').value = String(new Date().getMonth() + 1);
 
     await refreshStatus();
   })();

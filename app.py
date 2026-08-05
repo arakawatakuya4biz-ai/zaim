@@ -157,6 +157,9 @@ def build_payment_df(df):
     pf['月'] = pf['日付'].dt.month
     pf['年'] = pf['日付'].dt.year
     pf['支出'] = pd.to_numeric(pf['支出'], errors='coerce').fillna(0)
+    # 大型出費／社会保険料 → 社会保険 に振り替え
+    mask = (pf['カテゴリ'] == '大型出費') & (pf.get('カテゴリの内訳', pd.Series('', index=pf.index)) == '社会保険料')
+    pf.loc[mask, 'カテゴリ'] = '社会保険'
     return pf
 
 
